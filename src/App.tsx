@@ -10,8 +10,6 @@ import {
   GraphQLSchema,
   DocumentNode,
   GraphQLError,
-  GraphQLObjectType,
-  GraphQLNamedType,
 } from 'graphql';
 import {addMockFunctionsToSchema} from 'graphql-tools';
 
@@ -23,8 +21,7 @@ import {prettify} from './utils/prettify';
 import './App.scss';
 
 function getValidOperationsDocument(operationsCode: string) {
-  const source = new Source(operationsCode);
-  const document = parse(source);
+  const document = parse(new Source(operationsCode));
   const areAllNodesExecutable = document.definitions.every(
     isExecutableDefinitionNode
   );
@@ -32,8 +29,7 @@ function getValidOperationsDocument(operationsCode: string) {
 }
 
 function getValidatedSchema(schemaCode: string) {
-  const source = new Source(schemaCode);
-  const document = parse(source);
+  const document = parse(new Source(schemaCode));
   const allNodesAreTypeDefs = document.definitions.every(
     isTypeSystemDefinitionNode
   );
@@ -41,29 +37,31 @@ function getValidatedSchema(schemaCode: string) {
   return allNodesAreTypeDefs ? buildSchema(schemaCode) : null;
 }
 
+type Props = {};
+
 type State = {
   schemaCode: string;
   schema: GraphQLSchema | null;
-  schemaErrors: ReadonlyArray<GraphQLError> | null;
+  schemaErrors: ReadonlyArray<GraphQLError>;
   operationsCode: string;
   operationsDocument: DocumentNode | null;
-  operationsErrors: ReadonlyArray<GraphQLError> | null;
-  validationErrors: ReadonlyArray<GraphQLError> | null;
+  operationsErrors: ReadonlyArray<GraphQLError>;
+  validationErrors: ReadonlyArray<GraphQLError>;
   queryResult: string;
 };
 
-class App extends Component<{}, State> {
-  constructor(props: {}) {
+class App extends Component<Props, State> {
+  constructor(props: Props) {
     super(props);
     this.state = {
       schemaCode: mockSchema,
       schema: null,
-      schemaErrors: null,
+      schemaErrors: [],
       operationsCode: mockOperations,
       operationsDocument: null,
-      operationsErrors: null,
-      validationErrors: null,
-      queryResult: '{}',
+      operationsErrors: [],
+      validationErrors: [],
+      queryResult: '',
     };
   }
 
@@ -74,7 +72,7 @@ class App extends Component<{}, State> {
 
   handleSchemaChange = (schemaCode: string) => {
     let schema = null,
-      schemaErrors = null;
+      schemaErrors: ReadonlyArray<GraphQLError> = [];
     try {
       schema = getValidatedSchema(schemaCode);
     } catch (e) {
@@ -89,11 +87,10 @@ class App extends Component<{}, State> {
 
   handleOperationsChange = (operationsCode: string) => {
     let operationsDocument = null,
-      operationsErrors = null;
+      operationsErrors: ReadonlyArray<GraphQLError> = [];
     try {
       operationsDocument = getValidOperationsDocument(operationsCode);
     } catch (e) {
-      console.log('oErrors');
       operationsErrors = e as ReadonlyArray<GraphQLError>;
     }
     this.setState(
@@ -103,17 +100,10 @@ class App extends Component<{}, State> {
   };
 
   validateOperationsAgainstSchema = () => {
-    let validationErrors = null;
     const {operationsDocument, schema} = this.state;
     if (schema && operationsDocument) {
-      try {
-        validationErrors = validate(schema, operationsDocument);
-      } catch (e) {
-        console.log('vErrors');
-        validationErrors = [e.message];
-      }
+      this.setState({validationErrors: validate(schema, operationsDocument)});
     }
-    this.setState({validationErrors});
   };
 
   handlePrettify = () => {
@@ -124,14 +114,14 @@ class App extends Component<{}, State> {
   };
 
   handleExecuteQuery = () => {
-    const {schema} = this.state;
+    const {schema, operationsCode} = this.state;
     if (schema) {
       addMockFunctionsToSchema({
         schema,
         mocks: buildFakerResolvers(schema.getTypeMap()),
       });
-      graphql(schema, this.state.operationsCode).then(result => {
-        console.log(result);
+
+      graphql(schema, operationsCode).then(result => {
         this.setState({queryResult: JSON.stringify(result, null, 2)});
       });
     }
@@ -169,13 +159,13 @@ class App extends Component<{}, State> {
           }}
         />
         <button onClick={this.handlePrettify}>Prettify</button>
-        <p>
-          {schemaErrors && JSON.stringify(schemaErrors)}
-          {operationsErrors && JSON.stringify(operationsErrors)}
-          {Array.isArray(validationErrors) &&
-            validationErrors.length > 0 &&
-            JSON.stringify(validationErrors)}
-        </p>
+        <pre>
+          {schemaErrors.length > 0 && JSON.stringify(schemaErrors, null, 2)}
+          {operationsErrors.length > 0 &&
+            JSON.stringify(operationsErrors, null, 2)}
+          {validationErrors.length > 0 &&
+            JSON.stringify(validationErrors, null, 2)}
+        </pre>
         <button onClick={this.handleExecuteQuery}>Execute</button>
       </div>
     );

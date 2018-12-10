@@ -3,9 +3,7 @@ import {GraphQLNamedType, GraphQLObjectType} from 'graphql';
 import faker from 'faker';
 import {IMocks} from 'graphql-tools';
 
-export function isObjectType(
-  type: GraphQLNamedType
-): type is GraphQLObjectType {
+function isObjectType(type: GraphQLNamedType): type is GraphQLObjectType {
   return type instanceof GraphQLObjectType;
 }
 

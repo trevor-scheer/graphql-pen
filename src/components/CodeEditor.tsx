@@ -52,8 +52,10 @@ export class CodeEditor extends Component<Props, {}> {
       ...this.props.codeMirrorOpts,
     });
 
-    this.editor.setOption('lint', {schema: this.props.schema});
-    this.editor.setOption('hintOptions', {schema: this.props.schema});
+    if (this.props.schema) {
+      this.editor.setOption('lint', {schema: this.props.schema});
+      this.editor.setOption('hintOptions', {schema: this.props.schema});
+    }
     this.editor.setValue(this.props.value);
     this.editor.on('change', this.handleChange);
   }
@@ -71,6 +73,7 @@ export class CodeEditor extends Component<Props, {}> {
       this.editor.setValue(this.props.value);
     }
 
+    // Only update the internal schema for lint/hint if it's valid
     if (this.props.schema && this.props.schema !== prevProps.schema) {
       try {
         assertValidSchema(this.props.schema);
