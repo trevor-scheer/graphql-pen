@@ -1,0 +1,12 @@
+.App {
+  width: 100%;
+
+  &-editors {
+    display: flex;
+    margin-bottom: 20px;
+
+    & > div {
+      flex-grow: 1;
+    }
+  }
+}
