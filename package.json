@@ -22,7 +22,7 @@
     "bfj": "6.1.1",
     "case-sensitive-paths-webpack-plugin": "2.1.2",
     "chalk": "2.4.1",
-    "codemirror": "^5.41.0",
+    "codemirror": "^5.58.2",
     "codemirror-graphql": "^0.8.3",
     "css-loader": "1.0.0",
     "dotenv": "6.0.0",
